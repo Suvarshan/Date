@@ -34,28 +34,41 @@ async function doLogin() {
   if (!email || !password) { msg.className='login-msg err'; msg.textContent='Please fill in both fields.'; return; }
   btn.disabled = true; btn.textContent = 'Signing in…';
   try {
-    const res = await fetch(window.withApiBase('/admin/login'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const raw = await res.text();
-    let data = {};
-    try {
-      data = raw ? JSON.parse(raw) : {};
-    } catch {
-      data = {};
+    const loginPaths = ['/api/admin/login', '/admin/login'];
+    let loginError = 'Login failed. Check backend URL/CORS settings.';
+    let token = '';
+
+    for (const path of loginPaths) {
+      const res = await fetch(window.withApiBase(path), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const raw = await res.text();
+      let data = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = {};
+      }
+
+      if (res.ok && data.token) {
+        token = data.token;
+        break;
+      }
+
+      loginError = data.error || `Login failed (${res.status}). Check backend URL/CORS settings.`;
+      if (res.status !== 404) {
+        break;
+      }
     }
 
-    if (!res.ok) {
-      throw new Error(data.error || `Login failed (${res.status}). Check backend URL/CORS settings.`);
+    if (!token) {
+      throw new Error(loginError);
     }
 
-    if (!data.token) {
-      throw new Error('Login response is missing token. Check backend deployment.');
-    }
-
-    localStorage.setItem('adminToken', data.token);
+    localStorage.setItem('adminToken', token);
     window.location.href = '/admin/admin.html';
   } catch (e) {
     msg.className = 'login-msg err'; msg.textContent = e.message;

@@ -3,6 +3,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { createLoginController } = require('./controllers/authController');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -148,28 +149,9 @@ app.use('/admin', express.static(path.join(__dirname, 'public', 'admin'), static
 app.use('/shared', express.static(path.join(__dirname, 'public', 'shared'), staticOptions));
 app.use('/', express.static(path.join(__dirname, 'public', 'app'), staticOptions));
 
-app.post('/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
-
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  if (!user) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-
-  const token = jwt.sign({ userId: user.id, email: user.email, name: user.name }, jwtSecret, {
-    expiresIn: '2h'
-  });
-
-  res.json({ token });
-});
+const loginController = createLoginController({ db, bcrypt, jwt, jwtSecret });
+app.post('/admin/login', loginController);
+app.post('/api/admin/login', loginController);
 
 app.get('/admin/responses', authMiddleware, (req, res) => {
   try {
