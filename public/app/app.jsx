@@ -325,15 +325,44 @@ function App() {
   // ── Check DOB against admin DB ─────────────────────────────────
   const checkDOB = async (birthday) => {
     try {
-      const res = await fetch('/api/check-dob', {
+      const res = await fetch(window.withApiBase('/api/check-dob'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dob: birthday }),
       });
-      const result = await res.json();
-      return result;
-    } catch {
-      return { matched: false };
+
+      const raw = await res.text();
+      let result = {};
+      try {
+        result = raw ? JSON.parse(raw) : {};
+      } catch {
+        result = {};
+      }
+
+      if (!res.ok) {
+        return {
+          matched: false,
+          images: [],
+          error: result.error || `DOB check failed (${res.status})`
+        };
+      }
+
+      const images = Array.isArray(result.images) ? result.images : [];
+      const normalizedImages = images
+        .map((img) => {
+          if (typeof img === 'string') return img;
+          if (img && typeof img === 'object') return img.src || img.dataUrl || '';
+          return '';
+        })
+        .filter(Boolean);
+
+      return {
+        matched: result.matched === true,
+        label: result.label || '',
+        images: normalizedImages,
+      };
+    } catch (error) {
+      return { matched: false, images: [], error: error.message || 'Network error while checking DOB' };
     }
   };
 
@@ -342,7 +371,7 @@ function App() {
     setSubmitting(true);
     const payload = { ...data, accepted, createdAt: new Date().toISOString() };
     try {
-      await fetch('/api/responses', {
+      await fetch(window.withApiBase('/api/responses'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -389,12 +418,18 @@ function App() {
   const handleAccept = async () => {
     if (!data.date) return fb('Please pick a date first 📅');
     await submitResponse(true);
+
     // Now check if DOB matches any admin special date
     const result = await checkDOB(data.birthday);
-    if (result.matched && result.images.length > 0) {
+
+    if (result.images && result.images.length > 0) {
       setMatchedImages(result.images);
       launchConfetti();
       goto(STEPS.IMAGES);
+    } else if (result.error) {
+      fb('Saved successfully, but surprise images are unavailable right now. Please try again later.', false);
+      launchConfetti();
+      goto(STEPS.SUCCESS);
     } else {
       launchConfetti();
       goto(STEPS.SUCCESS);

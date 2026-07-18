@@ -11,7 +11,8 @@ function doLogout() {
 
 async function apiFetch(url, opts = {}) {
   const token = getToken();
-  const res = await fetch(url, {
+  const finalUrl = window.withApiBase ? window.withApiBase(url) : url;
+  const res = await fetch(finalUrl, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
