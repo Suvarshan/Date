@@ -1,0 +1,12 @@
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/"
+  to = "/app/"
+  status = 302
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/login.html"
+  status = 302
