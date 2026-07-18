@@ -1,0 +1,4 @@
+node_modules/
+responses.db
+.DS_Store
+.env

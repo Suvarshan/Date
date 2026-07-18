@@ -29,6 +29,8 @@ function showFeedback(elId, msg, color) {
   }
 }
 
+const localStorageKey = 'DateProposalResponses';
+
 function openDatabase() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('DateProposalDB', 1);
@@ -43,7 +45,18 @@ function openDatabase() {
   });
 }
 
+function saveResponseLocalStorage(data) {
+  const saved = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+  saved.push(data);
+  localStorage.setItem(localStorageKey, JSON.stringify(saved));
+}
+
 function saveResponse(data) {
+  if (!window.indexedDB) {
+    saveResponseLocalStorage(data);
+    return Promise.resolve(null);
+  }
+
   return openDatabase().then(db => {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('responses', 'readwrite');
@@ -52,7 +65,35 @@ function saveResponse(data) {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+  }).catch(error => {
+    console.warn('IndexedDB save failed, falling back to localStorage:', error);
+    saveResponseLocalStorage(data);
+    return null;
   });
+}
+
+function getSavedResponsesLocalStorage() {
+  return JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+}
+
+async function getSavedResponses() {
+  if (!window.indexedDB) {
+    return getSavedResponsesLocalStorage();
+  }
+
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('responses', 'readonly');
+      const store = transaction.objectStore('responses');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.warn('Could not load saved responses from IndexedDB, using localStorage instead:', error);
+    return getSavedResponsesLocalStorage();
+  }
 }
 
 function handleName() {
@@ -227,6 +268,23 @@ async function handleProposal(accepted) {
     console.error(error);
   }
 
+  try {
+    await sendResponseToServer({
+      name: responseData.name,
+      birthday: responseData.birthday,
+      colour: responseData.colour,
+      place: responseData.place,
+      food: responseData.food,
+      date: responseData.date,
+      accepted,
+      createdAt: responseData.createdAt,
+    });
+    statusEl.textContent = '✅ Saved locally and sent to the server.';
+  } catch (error) {
+    statusEl.textContent = '⚠️ Saved locally, but could not send to server.';
+    console.error('Server save error:', error);
+  }
+
   if (accepted) {
     showConfetti();
     goto(7);
@@ -234,6 +292,25 @@ async function handleProposal(accepted) {
     goto(8);
   }
 }
+
+function sendResponseToServer(data) {
+  return fetch('/api/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  }).then(response => {
+    if (!response.ok) {
+      return response.json().then(err => {
+        throw new Error(err.error || 'Server error');
+      });
+    }
+    return response.json();
+  });
+}
+
+window.getSavedResponses = getSavedResponses;
 
 function showConfetti() {
   const colors = ['#e9618a', '#facc15', '#7c3aed', '#22c55e', '#38bdf8', '#fb7185'];
