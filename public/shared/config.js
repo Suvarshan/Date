@@ -1,8 +1,18 @@
 (function () {
-  // Default: same-origin API (works when frontend+backend are deployed together).
-  // Optional override: set window.API_BASE_URL before this file loads.
-  // Example override value: https://date-backend.onrender.com
-  var apiBaseUrl = window.API_BASE_URL || '';
+  // Dual mode:
+  // 1) Same-origin API when frontend+backend run together.
+  // 2) Explicit backend URL for split deploys (e.g., Netlify + Render).
+  var explicitProductionApiBaseUrl = '';
+
+  var isLocal =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  // Priority:
+  // window.API_BASE_URL override > local same-origin > explicit production backend.
+  var apiBaseUrl =
+    window.API_BASE_URL ||
+    (isLocal ? '' : explicitProductionApiBaseUrl);
 
   window.API_BASE_URL = apiBaseUrl;
   window.withApiBase = function (path) {
