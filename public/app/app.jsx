@@ -218,89 +218,15 @@ function DatePickerStep({ step, heading, sub, value, onChange, onSubmit, feedbac
 
 // ── Draggable image board ────────────────────────────────────────
 function DraggableImageBoard({ images }) {
-  const boardRef = useRef(null);
-  const dragRef = useRef(null);
-  const [positions, setPositions] = useState([]);
-
-  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-  useEffect(() => {
-    // Spread images in a simple staggered layout when the board opens.
-    const next = images.map((_, index) => ({
-      x: 14 + (index % 3) * 105,
-      y: 14 + Math.floor(index / 3) * 92,
-    }));
-    setPositions(next);
-  }, [images]);
-
-  const handlePointerDown = (event, index) => {
-    const board = boardRef.current;
-    if (!board || !positions[index]) return;
-
-    const boardRect = board.getBoundingClientRect();
-    const cardRect = event.currentTarget.getBoundingClientRect();
-    const pointerX = event.clientX - boardRect.left;
-    const pointerY = event.clientY - boardRect.top;
-
-    dragRef.current = {
-      index,
-      offsetX: pointerX - positions[index].x,
-      offsetY: pointerY - positions[index].y,
-      maxX: Math.max(0, boardRect.width - cardRect.width),
-      maxY: Math.max(0, boardRect.height - cardRect.height),
-      pointerId: event.pointerId,
-    };
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handlePointerMove = (event) => {
-    const drag = dragRef.current;
-    const board = boardRef.current;
-    if (!drag || !board) return;
-
-    const boardRect = board.getBoundingClientRect();
-    const pointerX = event.clientX - boardRect.left;
-    const pointerY = event.clientY - boardRect.top;
-
-    const nextX = clamp(pointerX - drag.offsetX, 0, drag.maxX);
-    const nextY = clamp(pointerY - drag.offsetY, 0, drag.maxY);
-
-    setPositions((prev) => prev.map((pos, i) => (i === drag.index ? { x: nextX, y: nextY } : pos)));
-  };
-
-  const handlePointerUp = (event) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    if (event.currentTarget.hasPointerCapture(drag.pointerId)) {
-      event.currentTarget.releasePointerCapture(drag.pointerId);
-    }
-    dragRef.current = null;
-  };
-
-  const boardHeight = Math.max(280, Math.ceil(images.length / 3) * 110 + 90);
-
   return (
-    <div className="drag-board-wrap">
-      <p className="drag-board-hint">Drag photos around: move up, down, left, and right ✨</p>
-      <div ref={boardRef} className="drag-board" style={{ height: `${boardHeight}px` }}>
-        {images.map((src, index) => {
-          const pos = positions[index] || { x: 0, y: 0 };
-          return (
-            <button
-              key={index}
-              type="button"
-              className="drag-image-card"
-              style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-              onPointerDown={(e) => handlePointerDown(e, index)}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-            >
-              <img src={src} alt={`Special moment ${index + 1}`} className="reveal-img" loading="lazy" draggable="false" />
-            </button>
-          );
-        })}
+    <div className="photo-grid-wrap">
+      <p className="drag-board-hint">Here are all your matched photos, laid out as a responsive grid ✨</p>
+      <div className="photo-grid">
+        {images.map((src, index) => (
+          <div key={`${src}-${index}`} className="photo-card" style={{ animationDelay: `${index * 85}ms` }}>
+            <img src={src} alt={`Special moment ${index + 1}`} className="reveal-img" loading="lazy" draggable="false" />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -311,7 +237,7 @@ function App() {
   const [step, setStep] = useState(STEPS.INTRO);
   const [data, setData] = useState({
     name: '', birthday: '', colour: '', place: '', food: '',
-    movie: '', song: '', memory: '', date: '', accepted: null,
+    movie: '', song: '', memory: '', date: '', message: '', accepted: null,
   });
   const [feedback, setFeedback] = useState({ msg: '', ok: false });
   const [matchedImages, setMatchedImages] = useState([]);
@@ -676,6 +602,18 @@ function App() {
               min={new Date().toISOString().split('T')[0]}
               onChange={e => { set('date', e.target.value); clearFb(); }}
             />
+            {data.date && (
+              <>
+                <label className="date-label" style={{ marginTop: '1rem' }}>Leave a message 💌</label>
+                <textarea
+                  className="text-input message-input"
+                  rows="4"
+                  placeholder="Write something sweet, funny, or heartfelt..."
+                  value={data.message}
+                  onChange={e => set('message', e.target.value)}
+                />
+              </>
+            )}
             {feedback.msg && <div className={`feedback ${feedback.ok ? 'ok' : 'err'}`}>{feedback.msg}</div>}
             <button className="cta-yes" disabled={submitting} onClick={handleAccept}>
               {submitting ? 'Saving…' : "Yes! I'd love to 💕"}
@@ -749,7 +687,7 @@ function App() {
               No pressure at all. Whenever you're ready, the invitation will be waiting
               — just like the stars, always there even when you can't see them. 🌙
             </p>
-            <button className="cta-yes btn-soft" onClick={() => { setData({ name:'', birthday:'', colour:'', place:'', food:'', movie:'', song:'', memory:'', date:'', accepted: null }); goto(STEPS.INTRO); }}>
+            <button className="cta-yes btn-soft" onClick={() => { setData({ name:'', birthday:'', colour:'', place:'', food:'', movie:'', song:'', memory:'', date:'', message:'', accepted: null }); goto(STEPS.INTRO); }}>
               Start again
             </button>
           </Card>

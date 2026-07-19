@@ -167,6 +167,12 @@ body {
   color: var(--text); background: rgba(255,255,255,0.07); outline: none;
   transition: border-color .15s, background .15s;
 }
+.message-input {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+  margin-top: .75rem;
+}
 .text-input:focus { border-color: var(--pink); background: rgba(255,255,255,0.11); }
 .text-input::placeholder { color: rgba(255,255,255,0.3); }
 .text-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.5); cursor: pointer; }
@@ -289,45 +295,38 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px; margin: 1rem 0;
 }
-.drag-board-wrap { margin: 1rem 0 .25rem; }
+.photo-grid-wrap { margin: 1rem 0 .25rem; }
 .drag-board-hint {
   font-size: 12.5px;
   color: var(--muted);
   text-align: center;
   margin-bottom: .65rem;
 }
-.drag-board {
-  position: relative;
-  width: 100%;
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px;
   border-radius: 14px;
   background:
     radial-gradient(circle at 20% 20%, rgba(233,97,138,.14), transparent 45%),
     radial-gradient(circle at 80% 80%, rgba(56,189,248,.12), transparent 48%),
     rgba(255,255,255,.04);
   border: 1px dashed rgba(255,255,255,.2);
-  overflow: hidden;
-  touch-action: none;
 }
-.drag-image-card {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 120px;
-  height: 145px;
-  border-radius: 14px;
+.photo-card {
   overflow: hidden;
-  border: 2px solid rgba(233,97,138,.35);
-  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  border-radius: 16px;
+  border: 2px solid rgba(233,97,138,.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
   background: rgba(255,255,255,.06);
-  cursor: grab;
-  padding: 0;
   animation: revealPop .45s ease both;
-  transition: box-shadow .15s, border-color .15s;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-.drag-image-card:active {
-  cursor: grabbing;
-  border-color: var(--aqua);
-  box-shadow: 0 14px 28px rgba(0,0,0,.45);
+.photo-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgba(56,189,248,.45);
+  box-shadow: 0 14px 28px rgba(0,0,0,.42);
 }
 .reveal-img-wrap {
   border-radius: 14px; overflow: hidden;
@@ -370,11 +369,12 @@ body {
 }
 
 @media (max-width: 480px) {
-  .drag-image-card {
-    width: 108px;
-    height: 132px;
-  }
+  .photo-grid { grid-template-columns: 1fr; }
   .reveal-img {
-    height: 100%;
+    height: 220px;
   }
+}
+
+@media (min-width: 481px) and (max-width: 900px) {
+  .photo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

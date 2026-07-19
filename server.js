@@ -24,6 +24,7 @@ const createResponses = `
     place TEXT NOT NULL,
     food TEXT NOT NULL,
     date TEXT,
+    message TEXT,
     accepted INTEGER NOT NULL,
     createdAt TEXT NOT NULL
   )
@@ -40,6 +41,11 @@ const createUsers = `
 
 db.prepare(createResponses).run();
 db.prepare(createUsers).run();
+
+const responseColumns = db.prepare('PRAGMA table_info(responses)').all();
+if (!responseColumns.some((column) => column.name === 'message')) {
+  db.prepare('ALTER TABLE responses ADD COLUMN message TEXT').run();
+}
 
 const createSpecialDates = `
   CREATE TABLE IF NOT EXISTS special_dates (
@@ -329,17 +335,27 @@ app.get('/api/responses', (req, res) => {
 });
 
 app.post('/api/responses', (req, res) => {
-  const { name, birthday, colour, place, food, date, accepted, createdAt } = req.body;
+  const { name, birthday, colour, place, food, date, message, accepted, createdAt } = req.body;
   if (!name || !birthday || !colour || !place || !food || typeof accepted !== 'boolean') {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
     const stmt = db.prepare(
-      `INSERT INTO responses (name, birthday, colour, place, food, date, accepted, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO responses (name, birthday, colour, place, food, date, message, accepted, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
-    const info = stmt.run(name, birthday, colour, place, food, date || null, accepted ? 1 : 0, createdAt || new Date().toISOString());
+    const info = stmt.run(
+      name,
+      birthday,
+      colour,
+      place,
+      food,
+      date || null,
+      message || null,
+      accepted ? 1 : 0,
+      createdAt || new Date().toISOString()
+    );
     return res.status(201).json({ id: info.lastInsertRowid });
   } catch (error) {
     console.error(error);
