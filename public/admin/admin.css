@@ -22,6 +22,7 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .app,
@@ -356,29 +357,33 @@ body {
   .sidebar {
     width: 100%;
     height: auto;
-    position: relative;
-    top: auto;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     border-right: none;
     border-bottom: 1px solid var(--border);
     padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    background: linear-gradient(180deg, rgba(16,10,34,.98), rgba(16,10,34,.92));
   }
 
   .sidebar-brand {
-    margin-bottom: 1rem;
+    margin-bottom: .85rem;
   }
 
   .sidebar-nav {
     flex-direction: row;
     flex-wrap: wrap;
     gap: .5rem;
-    margin-bottom: 1rem;
+    margin-bottom: .85rem;
   }
 
   .nav-item,
   .sidebar-user-link,
   .sidebar-logout {
-    flex: 1 1 160px;
+    flex: 1 1 0;
     justify-content: center;
+    min-height: 48px;
   }
 
   .sidebar-user-link,
@@ -405,6 +410,14 @@ body {
     width: 100%;
   }
 
+  .btn-refresh,
+  .btn-primary,
+  .sidebar-user-link,
+  .sidebar-logout,
+  .nav-item {
+    min-height: 48px;
+  }
+
   .stats-row {
     grid-template-columns: 1fr;
   }
@@ -424,7 +437,8 @@ body {
   }
 
   .date-card-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .5rem;
   }
 
@@ -435,40 +449,129 @@ body {
 }
 
 @media (max-width: 560px) {
+  .sidebar {
+    padding: .85rem;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+  }
+
+  .sidebar-brand {
+    margin-bottom: .75rem;
+  }
+
+  .brand-icon {
+    font-size: 20px;
+  }
+
+  .brand-name {
+    font-size: .95rem;
+  }
+
+  .nav-item,
+  .sidebar-user-link,
+  .sidebar-logout {
+    padding: 11px 10px;
+    border-radius: 12px;
+    font-size: .84rem;
+  }
+
   .main-content {
     padding: .85rem;
   }
 
   .page-title {
-    font-size: 1.45rem;
+    font-size: 1.35rem;
+  }
+
+  .page-header {
+    gap: .85rem;
+    margin-bottom: 1.1rem;
   }
 
   .page-sub {
     max-width: none;
+    font-size: .85rem;
   }
 
   .panel,
   .date-card,
   .response-card,
   .login-card {
+    padding: .95rem;
+    border-radius: 14px;
+  }
+
+  .panel {
+    margin-bottom: 1rem;
+  }
+
+  .stat-card {
     padding: 1rem;
+  }
+
+  .stat-card strong {
+    font-size: 1.7rem;
   }
 
   .response-name {
     font-size: 1rem;
   }
 
+  .response-card-header,
+  .date-card-header {
+    gap: .85rem;
+  }
+
+  .response-badge {
+    align-self: flex-start;
+  }
+
   .response-grid {
     grid-template-columns: 1fr;
+    gap: .5rem;
+  }
+
+  .response-field {
+    padding: .55rem .7rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
   }
 
   .images-grid {
     justify-content: center;
+    gap: 8px;
   }
 
   .image-thumb {
-    width: 76px;
-    height: 76px;
+    width: 72px;
+    height: 72px;
+  }
+
+  .add-date-form {
+    gap: .85rem;
+  }
+
+  .form-group label,
+  .page-sub,
+  .date-label-text,
+  .modal-sub {
+    line-height: 1.45;
+  }
+
+  .field,
+  .btn-refresh,
+  .btn-primary,
+  .btn-upload,
+  .btn-delete-date {
+    border-radius: 12px;
+  }
+
+  .upload-zone {
+    padding: 1.5rem .9rem;
+  }
+
+  .upload-icon {
+    font-size: 30px;
   }
 
   .login-shell {
